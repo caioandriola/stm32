@@ -123,6 +123,40 @@ void aula_27_08(){
 	}
 }
 
+void aula_01_09(){
+	Utility_Init();
+
+	GPIO_Clock_Enable(GPIOA); //liga clock
+	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);//PA6 como saída
+
+	GPIO_Clock_Enable(GPIOE);
+	GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
+
+	int delay=1000;
+	int bin =1;
+	while(1){
+
+		if(bin==1){
+			delay=100;
+
+			GPIO_Toggle_Pin(GPIOA,PIN_6);
+			Delay_ms(delay);
+
+			if(!GPIO_Read_Pin(GPIOE,PIN_3)) bin--;
+		}
+		else if(bin==0){
+			delay=1000;
+
+			GPIO_Toggle_Pin(GPIOA,PIN_6);
+			Delay_ms(delay);
+
+			if(!GPIO_Read_Pin(GPIOE,PIN_3)) bin++;
+
+		}
+
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -156,7 +190,7 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
 
-  aula_27_08();
+  aula_01_09();
   /*RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
