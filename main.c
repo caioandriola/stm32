@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "Utility.h"
+#include "LCD_Blio.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -158,6 +160,135 @@ void aula_01_09(){
 	}
 }
 
+void Q14_lista(){
+	Utility_Init();
+}
+
+
+
+
+
+
+
+
+
+
+
+void Q15_lista(){
+	Utility_Init();
+
+	GPIO_Clock_Enable(GPIOA);
+	GPIO_Clock_Enable(GPIOE);
+
+
+
+	GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
+
+	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);
+
+
+	while(1){
+		if (!GPIO_Read_Pin(GPIOE,PIN_3)){
+			if(GPIO_Read_Pin(GPIOA,PIN_6)){
+				GPIO_Write_Pin(GPIOA,PIN_6,LOW);
+					Delay_ms(500);
+
+			}
+
+			else if(!GPIO_Read_Pin(GPIOA,PIN_6)){
+				GPIO_Write_Pin(GPIOA,PIN_6,HIGH);
+					Delay_ms(500);
+			}
+
+		}
+	}
+}
+
+void Q_lista(){
+	Utility_Init();
+
+	GPIO_Clock_Enable(GPIOA);
+	GPIO_Clock_Enable(GPIOE);
+
+
+
+	GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
+
+	GPIO_Pin_Mode(GPIOE, PIN_4, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_4, PULL_UP);
+
+
+	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);
+
+	while(1){
+		if(!GPIO_Read_Pin(GPIOE,PIN_4)){
+			while(!GPIO_Read_Pin(GPIOE,PIN_4)){
+				if (!GPIO_Read_Pin(GPIOE,PIN_3) ){
+					GPIO_Write_Pin(GPIOA, PIN_6,LOW);
+					Delay_ms(2000);
+				}
+			}
+		}
+		if(GPIO_Read_Pin(GPIOE,PIN_4)||GPIO_Read_Pin(GPIOE,PIN_3)){
+			GPIO_Write_Pin(GPIOA,PIN_6,HIGH);
+		}
+	}
+}
+
+
+
+void Q16_lista(){
+	Utility_Init();
+
+	GPIO_Clock_Enable(GPIOA);
+	GPIO_Clock_Enable(GPIOE);
+
+
+
+	GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
+
+	GPIO_Pin_Mode(GPIOE, PIN_4, INPUT);
+	GPIO_Resistor_Enable(GPIOE, PIN_4, PULL_UP);
+
+
+	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);
+
+	int ligado = 0,bloqueado=0;
+	GPIO_Write_Pin(GPIOA, PIN_6,HIGH);
+
+	while(1){
+		if (GPIO_Read_Pin(GPIOE,PIN_4)){
+			bloqueado=0;
+		}
+		if(!GPIO_Read_Pin(GPIOE,PIN_4) && GPIO_Read_Pin(GPIOE,PIN_3) && !bloqueado){
+			Delay_ms(20);
+			if (!GPIO_Read_Pin(GPIOE,PIN_4) && GPIO_Read_Pin(GPIOE,PIN_3) && !bloqueado){
+				int contador = 0;
+				while(contador<100 && !GPIO_Read_Pin(GPIOE,PIN_4) ) {
+					if(!GPIO_Read_Pin(GPIOE,PIN_3)){
+						Delay_ms(20);
+						if (!GPIO_Read_Pin(GPIOE,PIN_3)){
+							Delay_ms(10);
+							ligado=1;
+							GPIO_Write_Pin(GPIOA, PIN_6,LOW);
+							break;
+						}
+					}
+					Delay_ms(10);
+					contador ++;
+				}
+				bloqueado=1;
+			}
+		}
+		if (ligado && GPIO_Read_Pin(GPIOE,PIN_4) && GPIO_Read_Pin(GPIOE,PIN_3)){
+			GPIO_Write_Pin(GPIOA, PIN_6,HIGH);
+			ligado=0;
+		}
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -190,7 +321,7 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
 
-  aula_01_09();
+  Q16_lista();
   /*RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
