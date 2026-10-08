@@ -24,6 +24,7 @@
 #include "Utility.h"
 #include "LCD_Blio.h"
 #include "stdio.h"
+#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -161,17 +162,122 @@ void aula_01_09(){
 }
 
 void Q14_lista(){
-	Utility_Init();
+	/*Utility_Init();
+
+	GPIO_Clock_Enable(GPIOC);
+
+	GPIO_Pin_Mode(GPIOC, PIN_0, OUTPUT);
+	GPIO_Pin_Mode(GPIOC, PIN_1, OUTPUT);
+	GPIO_Pin_Mode(GPIOC, PIN_2, OUTPUT);
+
+	GPIO_Write_Pin(GPIOC,PIN_0,LOW);
+	GPIO_Write_Pin(GPIOC,PIN_1,HIGH);
+
+	int sentido=0,tempo=0,incremento=5;
+
+	while(1){
+
+		if (tempo==50 && sentido==0){
+			incremento=-5;
+			tempo+=incremento;
+		}
+		else if (tempo==0 && sentido==0){
+			incremento=5;
+			sentido=1;
+			GPIO_Write_Pin(GPIOC,PIN_0,LOW);
+			GPIO_Write_Pin(GPIOC,PIN_1,HIGH);
+			tempo+=incremento;
+		}
+		else if (tempo==50 && sentido==1){
+			incremento=-5;
+			tempo+=incremento;
+		}
+		else if (tempo==0 && sentido==1){
+			incremento=5;
+			sentido=0;
+			GPIO_Write_Pin(GPIOC,PIN_0,HIGH);
+			GPIO_Write_Pin(GPIOC,PIN_1,LOW);
+			tempo+=incremento;
+		}
+
+		GPIO_Write_Pin(GPIOC,PIN_2,HIGH);
+		Delay_us(20);
+		GPIO_Write_Pin(GPIOC,PIN_2,LOW);
+		Delay_us(30);
+
+		tempo+=incremento;
+
+	}*/
+
+		int duty;
+		Utility_Init();
+		GPIO_Clock_Enable(GPIOD);
+
+		//PDO -> TIM4_CH1 -> PWM
+		GPIO_Pin_Mode(GPIOD, PIN_12, ALTERNATE);
+		GPIO_Alternate_Function(GPIOD,PIN_12,2);
+
+		//PD1 -> INA1
+		GPIO_Pin_Mode(GPIOD,PIN_1,OUTPUT);
+		GPIO_Output_Type(GPIOD, PIN_1, PUSH_PULL);
+
+		//PD2 -> INB1
+
+		GPIO_Pin_Mode(GPIOD,PIN_2,OUTPUT);
+		GPIO_Output_Type(GPIOD,PIN_2,PUSH_PULL);
+
+		 /* Configura o TIM4 */
+		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+
+		TIM4->PSC = 83;
+		TIM4->ARR = 499;
+		    /* TIM4_CH1 em PWM Mode 1 */
+		TIM4->CCMR1 &= ~(0b111 << 4);
+		TIM4->CCMR1 |= (0b110 << 4);
+		    /* Habilita preload do CCR1 */
+		TIM4->CCMR1 |= TIM_CCMR1_OC1PE;
+		    /* Habilita saída do canal 1 */
+		TIM4->CCER |= TIM_CCER_CC1E;
+		    /* Duty inicial = 0% */
+		TIM4->CCR1 = 0;
+		/* Atualiza os registradores */
+		TIM4->EGR = TIM_EGR_UG;
+		/* Habilita o timer */
+		TIM4->CR1 |= TIM_CR1_CEN;
+
+		while(1){
+
+			GPIO_Write_Pin(GPIOD, PIN_1, LOW);
+			GPIO_Write_Pin(GPIOD, PIN_2, HIGH);
+
+			for(duty = 0; duty <= 499; duty++){
+
+				TIM4->CCR1 = duty;
+				Delay_ms(10);
+			}
+
+			for(duty = 499; duty >= 0; duty--){
+				TIM4->CCR1 = duty;
+				Delay_ms(10);
+			}
+
+			GPIO_Write_Pin(GPIOD,PIN_1,HIGH);
+			GPIO_Write_Pin(GPIOD,PIN_2,LOW);
+
+			for(duty = 0; duty <= 499; duty++){
+				TIM4->CCR1 = duty;
+				Delay_ms(10);
+			}
+
+			for(duty = 499; duty >= 0; duty--){
+				TIM4->CCR1 = duty;
+				Delay_ms(10);
+			}
+		}
+
+
+
 }
-
-
-
-
-
-
-
-
-
 
 
 void Q15_lista(){
@@ -204,39 +310,6 @@ void Q15_lista(){
 		}
 	}
 }
-
-void Q_lista(){
-	Utility_Init();
-
-	GPIO_Clock_Enable(GPIOA);
-	GPIO_Clock_Enable(GPIOE);
-
-
-
-	GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
-	GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
-
-	GPIO_Pin_Mode(GPIOE, PIN_4, INPUT);
-	GPIO_Resistor_Enable(GPIOE, PIN_4, PULL_UP);
-
-
-	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);
-
-	while(1){
-		if(!GPIO_Read_Pin(GPIOE,PIN_4)){
-			while(!GPIO_Read_Pin(GPIOE,PIN_4)){
-				if (!GPIO_Read_Pin(GPIOE,PIN_3) ){
-					GPIO_Write_Pin(GPIOA, PIN_6,LOW);
-					Delay_ms(2000);
-				}
-			}
-		}
-		if(GPIO_Read_Pin(GPIOE,PIN_4)||GPIO_Read_Pin(GPIOE,PIN_3)){
-			GPIO_Write_Pin(GPIOA,PIN_6,HIGH);
-		}
-	}
-}
-
 
 
 void Q16_lista(){
@@ -289,6 +362,43 @@ void Q16_lista(){
 		}
 	}
 }
+
+
+void aula_8_10(){
+	Utility_Init();
+	DAC_Init(DAC_CHANNEL1);
+	const uint16_t array[200] = {
+	    /* 000-009 */  2048, 2112, 2176, 2240, 2304, 2368, 2431, 2494, 2557, 2619,
+	    /* 010-019 */  2680, 2741, 2801, 2861, 2919, 2977, 3034, 3090, 3145, 3198,
+	    /* 020-029 */  3251, 3302, 3353, 3402, 3449, 3495, 3540, 3583, 3625, 3665,
+	    /* 030-039 */  3704, 3741, 3776, 3810, 3842, 3872, 3900, 3927, 3951, 3974,
+	    /* 040-049 */  3995, 4014, 4031, 4046, 4059, 4070, 4079, 4086, 4091, 4094,
+	    /* 050-059 */  4095, 4094, 4091, 4086, 4079, 4070, 4059, 4046, 4031, 4014,
+	    /* 060-069 */  3995, 3974, 3951, 3927, 3900, 3872, 3842, 3810, 3776, 3741,
+	    /* 070-079 */  3704, 3665, 3625, 3583, 3540, 3495, 3449, 3402, 3353, 3302,
+	    /* 080-089 */  3251, 3198, 3145, 3090, 3034, 2977, 2919, 2861, 2801, 2741,
+	    /* 090-099 */  2680, 2619, 2557, 2494, 2431, 2368, 2304, 2240, 2176, 2112,
+	    /* 100-109 */  2048, 1983, 1919, 1855, 1791, 1727, 1664, 1601, 1538, 1476,
+	    /* 110-119 */  1415, 1354, 1294, 1234, 1176, 1118, 1061, 1005,  950,  897,
+	    /* 120-129 */   844,  793,  742,  693,  646,  600,  555,  512,  470,  430,
+	    /* 130-139 */   391,  354,  319,  285,  253,  223,  195,  168,  144,  121,
+	    /* 140-149 */   100,   81,   64,   49,   36,   25,   16,    9,    4,    1,
+	    /* 150-159 */     0,    1,    4,    9,   16,   25,   36,   49,   64,   81,
+	    /* 160-169 */   100,  121,  144,  168,  195,  223,  253,  285,  319,  354,
+	    /* 170-179 */   391,  430,  470,  512,  555,  600,  646,  693,  742,  793,
+	    /* 180-189 */   844,  897,  950, 1005, 1061, 1118, 1176, 1234, 1294, 1354,
+	    /* 190-199 */  1415, 1476, 1538, 1601, 1664, 1727, 1791, 1855, 1919, 1983
+	};
+
+	//DAC_SETVALUE(DAC_CHANNEL1, 1500, DAC_RES_12BITS);
+
+	while(1){
+		for (int i=0; i<200;i++){
+			DAC_SetValue(DAC_CHANNEL1, array[i], DAC_RES_12BITS);
+			Delay_ms(10);
+		}
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -321,7 +431,7 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
 
-  Q16_lista();
+  aula_8_10();
   /*RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
