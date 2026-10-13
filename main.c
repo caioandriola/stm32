@@ -24,7 +24,6 @@
 #include "Utility.h"
 #include "LCD_Blio.h"
 #include "stdio.h"
-#include "math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -430,8 +429,8 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
-  aula_8_10();
+  Utility_Init();
+  USART1_Init();
   /*RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
@@ -454,8 +453,26 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  GPIO_Clock_Enable(GPIOE);
+  GPIO_Pin_Mode(GPIOE,PIN_3,INPUT);
+  GPIO_Pin_Mode(GPIOE,PIN_4,INPUT);
+  GPIO_Resistor_Enable(GPIOE,PIN_3,PULL_UP);
+  GPIO_Resistor_Enable(GPIOE,PIN_4,PULL_UP);
+  printf("teste\n");
   while (1)
   {
+	  if(!GPIO_Read_Pin(GPIOE,PIN_3)){
+		  printf("pressionei k1\n");
+		  Delay_ms(1000);
+	  }
+	  Delay_ms(100);
+
+	  if(!GPIO_Read_Pin(GPIOE,PIN_4)){
+	  		  printf("pressionei k0\n");
+	  		  Delay_ms(1000);
+	  	  }
+  }
 	 /* GPIOA -> ODR |= 1 << 6;//PA6 nível alto
 	  atraso(1000000);
 	  GPIOA -> ODR |= 1 << 7;//PA7 nível alto
@@ -487,13 +504,12 @@ int main(void)
 			    GPIOA -> ODR &= ~(1<<7);
 		  }*/
 
-
 	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-}
+
 
 /**
   * @brief System Clock Configuration
