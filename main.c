@@ -398,6 +398,23 @@ void aula_8_10(){
 		}
 	}
 }
+
+void aula_15_10(){
+	Utility_Init();
+	USART1_Init();
+
+	ADC_Init(ADC1,SINGLE_CHANNEL,DAC_RES_12BITS);
+	ADC_SingleChannel(ADC1, ADC_IN0);
+
+	while (1){
+		uint16_t leitura = ADC_GetSingleConversion(ADC1);
+		float voltagem = ((float)leitura *3.3f)/4095;
+
+		printf("Voltagem = %.2f V\n",voltagem);
+		Delay_ms(1000);
+	}
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -453,7 +470,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  aula_15_10();
+  while (1)
+  {
 
+  }
+	 /*
+	  *
   GPIO_Clock_Enable(GPIOE);
   GPIO_Pin_Mode(GPIOE,PIN_3,INPUT);
   GPIO_Pin_Mode(GPIOE,PIN_4,INPUT);
@@ -473,7 +496,15 @@ int main(void)
 	  		  Delay_ms(1000);
 	  	  }
   }
-	 /* GPIOA -> ODR |= 1 << 6;//PA6 nível alto
+	  *
+	  *
+	  *
+	  *
+	  *
+	  *
+	  *
+	  *
+	  *  GPIOA -> ODR |= 1 << 6;//PA6 nível alto
 	  atraso(1000000);
 	  GPIOA -> ODR |= 1 << 7;//PA7 nível alto
 	  atraso(1000000);
