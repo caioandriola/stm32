@@ -447,6 +447,29 @@ void aula_20_10(){
 	}
 
 }
+
+void aula_27_10(){
+	Utility_Init();
+	USART1_Init();
+
+	ADC_Init(ADC1,SINGLE_CHANNEL,DAC_RES_12BITS);
+	ADC_SingleChannel(ADC1, ADC_IN0);
+	GPIO_Clock_Enable(GPIOA);
+	GPIO_Pin_Mode(GPIOA,PIN_6,OUTPUT);
+	int limite = 1500;
+
+	while(1){
+		uint16_t leitura = ADC_GetSingleConversion(ADC1);
+		if ((int)(leitura)<limite){
+			GPIO_Write_Pin(GPIOA,PIN_6,LOW);
+		}
+		else {
+			GPIO_Write_Pin(GPIOA,PIN_6,HIGH);
+		}
+		Delay_ms(50);
+	}
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -502,11 +525,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  aula_20_10();
-  while (1)
-  {
-
-  }
+  aula_27_10();
 	 /*
 	  *
   GPIO_Clock_Enable(GPIOE);
