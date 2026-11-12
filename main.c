@@ -558,6 +558,38 @@ void aula_10_11(){
 
  }
 
+void aula_12_11(){
+	Utility_Init();
+
+	ADC_Init(ADC1,SINGLE_CHANNEL,DAC_RES_12BITS);
+	ADC_SingleChannel(ADC1, ADC_IN0);
+
+	GPIO_Clock_Enable(GPIOA);
+
+	GPIO_Pin_Mode(GPIOA,PIN_6,ALTERNATE);
+	GPIO_Alternate_Function(GPIOA,PIN_6,AF2);
+
+	uint16_t leitura = 0;
+
+	RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
+	TIM3-> CR1 &= ~TIM_CR1_DIR;
+	TIM3-> PSC = 209;
+	TIM3-> ARR = 4095;
+	TIM3-> CCMR2 |= TIM_CCMR1_OC1M_2|TIM_CCMR1_OC1M_1;
+	TIM3-> CCMR2 |= TIM_CCMR1_OC1PE;
+	TIM3-> CCER |= TIM_CCER_CC1E;
+	TIM3-> CCER |= TIM_CCER_CC1P;
+	TIM3-> EGR = 1;
+	TIM3-> CR1 |= TIM_CR1_CEN;
+
+	while(1){
+		leitura = ADC_GetSingleConversion(ADC1);
+		TIM3 -> CCR1 = leitura;
+
+	}
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -610,7 +642,9 @@ int main(void)
   GPIOE->PUPDR |= 0b01 << 8;  //liga pull up em PE3*/
 
 
-  aula_10_11();
+  aula_12_11();
+
+
 
 
   /* USER CODE END 2 */
