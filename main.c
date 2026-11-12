@@ -24,6 +24,7 @@
 #include "Utility.h"
 #include "LCD_Blio.h"
 #include "stdio.h"
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -470,6 +471,93 @@ void aula_27_10(){
 	}
 
 }
+
+
+
+// Função para preencher a Lookup Table no início da execução
+/*int16_t inicializa_lut(void) {
+#include <math.h>
+	int16_t lut_seno [100];
+    for (int i = 0; i < 100; i++) {
+        float angulo = (2.0f * 3.1415 * i) / 100;
+        // Calcula a amplitude relativa variando de -2047 a +2047
+        lut_seno[i] = (int16_t)(sinf(angulo) * 2047.0f);
+
+    }
+    return lut_seno;
+}*/
+
+/*void aula_05_11(){
+	Utility_Init();
+	USART1_Init();
+	ADC_Init(ADC1, MULTI_CHANNEL, DAC_RES_12BITS);
+	uint8_t array_de_dois [2] = {ADC_IN0, ADC_IN1};
+	ADC_MultiChannel(ADC 1,2,array_de_dois);
+	DAC_Init(DAC_CHANNEL1);
+
+	ADC_Init(ADC1,SINGLE_CHANNEL,DAC_RES_12BITS);
+	ADC_SingleChannel(ADC1, ADC_IN0);
+
+	ADC_Init(ADC2,SINGLE_CHANNEL,DAC_RES_12BITS);
+	ADC_SingleChannel(ADC2, ADC_IN1);
+
+	ADC_GetMultiConversion(ADC1,2,array_de_dois);
+	int16_t lut_seno [100];
+    for (int i = 0; i < 100; i++) {
+        float angulo = (2.0f * 3.1415 * i) / 100;
+        // Calcula a amplitude relativa variando de -2047 a +2047
+        lut_seno[i] = (int16_t)(sinf(angulo) * 2047.0f);
+
+    }
+
+
+	while(1){
+		for (int i=0; i<100;i++){
+
+			uint16_t leituraF = ADC_GetSingleConversion(ADC1);
+			int pulso = 10+(((float)leituraF * 190)/4095);
+
+			if(pulso>=200){
+				pulso=200;
+			}
+			if(pulso<=10){
+				pulso=10;
+			}
+
+			DAC_SetValue(DAC_CHANNEL1, lut_seno[i], DAC_RES_12BITS);
+			Delay_us((1/pulso)*1000000);
+		}
+	}
+}*/
+
+
+void SysTick_Handler(void){
+	  GPIOA -> ODR ^= (1<<6);
+}
+
+
+
+void aula_10_11(){
+ 	Utility_Init();
+ 	GPIO_Clock_Enable(GPIOA);
+ 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+ 	GPIOA->MODER |= 1 << 12;
+ 	SysTick ->CTRL = 0;
+ 	SysTick -> LOAD = 10.5e6;
+ 	SysTick -> VAL = 0;
+ 	SysTick ->CTRL = 0b011;
+
+ 	GPIO_Pin_Mode(GPIOA, PIN_6, OUTPUT);
+ 	GPIO_Pin_Mode(GPIOA, PIN_7, OUTPUT);
+
+ 	while(1){
+ 		GPIO_Toggle_Pin(GPIOA, PIN_7);
+ 		Delay_ms(100);
+
+ 	}
+
+ }
+
 /* USER CODE END 0 */
 
 /**
@@ -521,12 +609,15 @@ int main(void)
   GPIOE->MODER &= ~(0b11 << 8);
   GPIOE->PUPDR |= 0b01 << 8;  //liga pull up em PE3*/
 
+
+  aula_10_11();
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  aula_27_10();
-	 /*
+ 	 /*
 	  *
   GPIO_Clock_Enable(GPIOE);
   GPIO_Pin_Mode(GPIOE,PIN_3,INPUT);
