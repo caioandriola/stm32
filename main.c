@@ -589,6 +589,105 @@ void aula_12_11(){
 	}
 }
 
+void lista_q1(void) {
+    Utility_Init();
+    DAC_Init(DAC_CHANNEL1);
+
+    while (1) {
+        for (int valor = 0; valor <= 4095; valor += 15) {
+            DAC_SetValue(DAC_CHANNEL1, (uint16_t)valor, DAC_RES_12BITS);
+            Delay_ms(5);
+        }
+
+        for (int valor = 4095; valor >= 0; valor -= 15) {
+            DAC_SetValue(DAC_CHANNEL1, (uint16_t)valor, DAC_RES_12BITS);
+            Delay_ms(5);
+        }
+    }
+}
+
+void lista_q2(void){
+    Utility_Init();
+    DAC_Init(DAC_CHANNEL2);
+
+    float freq_hz = 200.0f;
+    float vpp = 2.0f;
+    float vm = 2.0f;
+    float pi = 3.14f;
+
+    uint16_t lut_seno[200];
+    float vp = vpp/2.0f;
+
+    for (int i =0;i<200;i++){
+    	float tensao = vm + vp*sinf((2.0f*pi*i) / 200.0f);
+    	int32_t codigo = (int32_t)roundf((tensao/3.3f)*4095.0f);
+
+
+    	if (codigo<4095)codigo = 4095;
+    	if (codigo<0)codigo =0;
+    	lut_seno[i] = (uint16_t)codigo;
+
+    }
+
+    uint32_t atraso_us = (uint32_t)(5000.0f/freq_hz);
+
+    while(1){
+    	for (int i = 0;i<200;i++){
+    		DAC_SetValue(DAC_CHANNEL2,lut_seno[i],DAC_RES_12BITS);
+    		Delay_us(atraso_us);
+    	}
+    }
+}
+void questao_04(void) {
+    Utility_Init();
+    DAC_Init(DAC_CHANNEL1, AUTO_NOISE, AMP_9BITS);
+
+    const float pi = 3.14f;
+    uint16_t seno_1khz[50];
+
+    for (int i = 0; i < 50; i++) {
+        float v = 1.0f + 1.0f * sinf((2.0f * pi * i) / 50.0f);
+        seno_1khz[i] = (uint16_t)roundf((v / 3.3f) * 4095.0f);
+    }
+
+    while (1) {
+        for (int i = 0; i < 50; i++) {
+            DAC_SetValue(DAC_CHANNEL1, seno_1khz[i], DAC_RES_12BITS);
+            DAC_SWTrigger(DAC_CHANNEL1);
+            Delay_us(20);
+        }
+    }
+}
+void lista_q5(void){
+	Utility_Init();
+	DAC_Init3(DAC_CHANNEL1,AUTO_TRIANGLE,AMP_8BITS);
+	DAC_SetValue(DAC_CHANNEL1, 1000, DAC_RES_12BITS);
+
+	DAC->CR &= ~DAC_CR_TSEL1;
+	DAC->CR |= DAC_CR_TSEL1_0;
+
+	RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
+	TIM3-> CR1 &= ~TIM_CR1_DIR;
+	TIM3-> PSC = 0;
+	TIM3-> ARR = 132;
+	TIM3-> CCMR2 |= TIM_CCMR1_OC1M_2|TIM_CCMR1_OC1M_1;
+	TIM3-> CCMR2 |= TIM_CCMR1_OC1PE;
+	TIM3-> CCER |= TIM_CCER_CC1E;
+	TIM3-> CCER |= TIM_CCER_CC1P;
+	TIM3-> EGR = 1;
+	TIM3-> CR2 |= TIM_CR1_CEN;
+
+
+	while(1){
+		DAC_SWTrigger(DAC_CHANNEL1);
+		Delay_us(3);
+	}
+
+
+
+
+}
+
 
 /* USER CODE END 0 */
 
@@ -621,8 +720,6 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-  Utility_Init();
-  USART1_Init();
   /*RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
   RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
@@ -642,7 +739,7 @@ int main(void)
   GPIOE->PUPDR |= 0b01 << 8;  //liga pull up em PE3*/
 
 
-  aula_12_11();
+  lista_q2();
 
 
 
