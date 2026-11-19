@@ -25,6 +25,8 @@
 #include "LCD_Blio.h"
 #include "stdio.h"
 #include <math.h>
+#include "audio_data.h"
+#include "audio2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -606,39 +608,39 @@ void lista_q1(void) {
     }
 }
 
-void lista_q2(void){
+void lista_q2(void) {
     Utility_Init();
     DAC_Init(DAC_CHANNEL2);
-
-    float freq_hz = 200.0f;
-    float vpp = 2.0f;
-    float vm = 2.0f;
-    float pi = 3.14f;
+    const float freq_hz = 250.0f;
+    const float vpp     = 2.0f;
+    const float vm      = 2.00f;
+    const float pi      = 3.14f;
 
     uint16_t lut_seno[200];
-    float vp = vpp/2.0f;
+    float vp = vpp / 2.0f;
 
-    for (int i =0;i<200;i++){
-    	float tensao = vm + vp*sinf((2.0f*pi*i) / 200.0f);
-    	int32_t codigo = (int32_t)roundf((tensao/3.3f)*4095.0f);
+    for (int i = 0; i < 200; i++) {
+        float tensao = vm + vp * sinf((2.0f * pi * i) / 200.0f);
+        int32_t codigo = (int32_t)roundf((tensao / 3.3f) * 4095.0f);
 
-
-    	if (codigo<4095)codigo = 4095;
-    	if (codigo<0)codigo =0;
-    	lut_seno[i] = (uint16_t)codigo;
-
+        if (codigo > 4095) codigo = 4095;
+        if (codigo < 0)    codigo = 0;
+        lut_seno[i] = (uint16_t)codigo;
     }
 
-    uint32_t atraso_us = (uint32_t)(5000.0f/freq_hz);
+    uint32_t atraso_us = (uint32_t)(5000.0f / freq_hz); // 1.000.000 / (200 * freq_hz)
 
-    while(1){
-    	for (int i = 0;i<200;i++){
-    		DAC_SetValue(DAC_CHANNEL2,lut_seno[i],DAC_RES_12BITS);
-    		Delay_us(atraso_us);
-    	}
+    while (1) {
+        for (int i = 0; i < 200; i++) {
+            DAC_SetValue(DAC_CHANNEL2, lut_seno[i], DAC_RES_12BITS);
+            Delay_us(atraso_us);
+        }
     }
 }
-void questao_04(void) {
+
+
+
+void lista_04(void) {
     Utility_Init();
     DAC_Init(DAC_CHANNEL1, AUTO_NOISE, AMP_9BITS);
 
@@ -658,35 +660,72 @@ void questao_04(void) {
         }
     }
 }
-void lista_q5(void){
-	Utility_Init();
-	DAC_Init3(DAC_CHANNEL1,AUTO_TRIANGLE,AMP_8BITS);
-	DAC_SetValue(DAC_CHANNEL1, 1000, DAC_RES_12BITS);
-
-	DAC->CR &= ~DAC_CR_TSEL1;
-	DAC->CR |= DAC_CR_TSEL1_0;
-
-	RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
-	TIM3-> CR1 &= ~TIM_CR1_DIR;
-	TIM3-> PSC = 0;
-	TIM3-> ARR = 132;
-	TIM3-> CCMR2 |= TIM_CCMR1_OC1M_2|TIM_CCMR1_OC1M_1;
-	TIM3-> CCMR2 |= TIM_CCMR1_OC1PE;
-	TIM3-> CCER |= TIM_CCER_CC1E;
-	TIM3-> CCER |= TIM_CCER_CC1P;
-	TIM3-> EGR = 1;
-	TIM3-> CR2 |= TIM_CR1_CEN;
+void lista_05(void) {
+    Utility_Init();
+    DAC_Init(DAC_CHANNEL1, AUTO_TRIANGLE, AMP_8BITS);
+    DAC_SetValue(DAC_CHANNEL1, 1000, DAC_RES_12BITS);
 
 
-	while(1){
-		DAC_SWTrigger(DAC_CHANNEL1);
-		Delay_us(3);
-	}
+    DAC->CR &= ~DAC_CR_TSEL1;
 
 
+    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+    TIM6->PSC = 0;
+    TIM6->ARR = 32;
+    TIM6->CR2 |= TIM_CR2_MMS_1; // Update Event gera pulso TRGO
+    TIM6->CR1 |= TIM_CR1_CEN;
 
+    while (1) {
 
+    }
 }
+
+void questao_06(void) {
+    Utility_Init();
+    DAC_Init(DAC_CHANNEL1);
+
+    const uint32_t tamanho_audio = sizeof(audio) / sizeof(audio[0]);
+
+    // Configura TIM6 para taxa exata de 44.100 Hz (84 MHz / 1905 = 44.094 Hz)
+    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+    TIM6->PSC = 0;
+    TIM6->ARR = 1904;
+    TIM6->CR1 |= TIM_CR1_CEN;
+
+    while (1) {
+        for (uint32_t i = 0; i < tamanho_audio; i++) {
+            while (!(TIM6->SR & TIM_SR_UIF)); // Aguarda o período de 1/44100 s (~22,68 us)
+            TIM6->SR &= ~TIM_SR_UIF;
+
+            DAC_SetValue(DAC_CHANNEL1, audio[i], DAC_RES_8BITS);
+        }
+
+        Delay_ms(1000);
+    }
+}
+
+/*void questao_07(){
+	Utility_Init();
+
+	uint16_t dados_adc1[2];
+
+
+    GPIO_Clock_Enable(GPIOA);
+    GPIO_Pin_Mode(GPIOA,PIN_0,ANALOG);
+    GPIO_Pin_Mode(GPIOA,PIN_1,ANALOG);
+
+    uint8_t canais_adc1[2] = (ADC_IN0,ADC_IN1);
+
+    ADC_Init(ADC1, MULTI_CHANNEL,ADC_RES_8BITS);
+    ADC_Multichannel(ADC1, 2, canais_adc1);
+
+    while (1) {
+    	ADC_GetMultiConversion(ADC1,2,dados_adc1);
+
+        Delay_ms(100);
+    }
+}*/
+
 
 
 /* USER CODE END 0 */
@@ -739,7 +778,7 @@ int main(void)
   GPIOE->PUPDR |= 0b01 << 8;  //liga pull up em PE3*/
 
 
-  lista_q2();
+  questao_06();
 
 
 
