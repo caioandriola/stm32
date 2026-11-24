@@ -638,6 +638,37 @@ void lista_q2(void) {
     }
 }
 
+void lista_q3(void) {
+    Utility_Init();
+    USART1_Init();
+
+    const float limite_inf_v = 1.30f;
+    const float limite_sup_v = 2.50f;
+
+    ADC_Init(ADC1, SINGLE_CHANNEL, ADC_RES_12BITS);
+    ADC_SingleChannel(ADC1, ADC_IN0);
+
+
+    ADC1->LTR = (uint16_t)((limite_inf_v / 3.3f) * 4095.0f);
+    ADC1->HTR = (uint16_t)((limite_sup_v / 3.3f) * 4095.0f);
+    ADC1->CR1 |= ADC_CR1_AWDEN;
+
+    while (1) {
+        uint16_t leitura = ADC_GetSingleConversion(ADC1);
+        float tensao = ((float)leitura * 3.3f) / 4095.0f;
+
+        printf("Tensao = %.2f V\n", tensao);
+
+        if (ADC1->SR & ADC_SR_AWD) {
+            printf("ALERTA: Tensao fora da faixa segura (%.2f V a %.2f V)!\n",
+                   limite_inf_v, limite_sup_v);
+            ADC1->SR = ~ADC_SR_AWD; // Limpa exclusivamente o bit AWD
+        }
+
+        Delay_ms(500);
+    }
+}
+
 
 
 void lista_04(void) {
@@ -703,6 +734,53 @@ void questao_06(void) {
         Delay_ms(1000);
     }
 }
+
+void lista_q9(void) {
+    Utility_Init();
+    USART1_Init();
+
+    GPIO_Clock_Enable(GPIOE);
+    GPIO_Pin_Mode(GPIOE, PIN_3, INPUT);
+    GPIO_Resistor_Enable(GPIOE, PIN_3, PULL_UP);
+
+    // TIM5: 84 MHz / 84 = 1 MHz (1 us/tick) | ARR = 4.999.999 -> estoura em 5 s
+    RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+    TIM5->PSC = 83;
+    TIM5->ARR = 4999999;
+    TIM5->EGR = TIM_EGR_UG;
+
+    printf("Pressione o botao (PE3)...\r\n");
+
+    while (1) {
+        while (GPIO_Read_Pin(GPIOE, PIN_3) == HIGH); // Espera apertar (PE3 -> LOW)
+        Delay_ms(20);                                // Filtra o bounce do aperto
+
+        TIM5->CR1 &= ~TIM_CR1_CEN;
+        TIM5->CNT  = 0;
+        TIM5->SR  &= ~TIM_SR_UIF;
+        TIM5->CR1 |= TIM_CR1_CEN;
+
+        uint8_t estourou = 0;
+        while (GPIO_Read_Pin(GPIOE, PIN_3) == LOW) {
+            if (TIM5->SR & TIM_SR_UIF) {             // Estouro real do contador (5 s)
+                estourou = 1;
+                printf("Pulso demasiadamente longo para ser medido (> 5 s)\r\n");
+                break;
+            }
+        }
+
+        TIM5->CR1 &= ~TIM_CR1_CEN;
+
+        if (!estourou) {
+            uint32_t largura_us = TIM5->CNT + 20000;
+            printf("Largura do pulso: %lu.%03lu ms\r\n", largura_us / 1000, largura_us % 1000);
+        }
+
+        while (GPIO_Read_Pin(GPIOE, PIN_3) == LOW);
+        Delay_ms(20);
+    }
+}
+
 
 /*void questao_07(){
 	Utility_Init();
@@ -778,7 +856,7 @@ int main(void)
   GPIOE->PUPDR |= 0b01 << 8;  //liga pull up em PE3*/
 
 
-  questao_06();
+  lista_q3();
 
 
 
